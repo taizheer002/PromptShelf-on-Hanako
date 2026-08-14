@@ -1,4 +1,11 @@
-import { Fragment, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import {
+  Fragment,
+  useEffect,
+  useRef,
+  useState,
+  type DragEvent as ReactDragEvent,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 import { createRoot } from 'react-dom/client';
 import { hana } from '@hana/plugin-sdk';
 import {
@@ -57,6 +64,27 @@ function absPath(dataDir: string | null, rel: string): string {
   const base = (dataDir ?? '').replace(/[\\/]+$/, '');
   return rel ? `${base}/${rel}` : base;
 }
+
+/** 绝对路径 → file:// URI（拖拽载荷用；Windows 盘符路径拼成 file:///G:/…） */
+function fileUriFromPath(path: string): string {
+  const fp = path.replace(/\\/g, '/');
+  return fp.startsWith('/') ? `file://${fp}` : `file:///${fp}`;
+}
+
+/* ---- 拖动排序（Task 7；设计 v3 7.4） ---- */
+
+/** 判定「拖出 widget 边界」的边缘余量（px）：最后拖拽位置进入该区域视为拖到会话区 */
+const DRAG_EDGE_MARGIN = 16;
+
+/** 拖拽中的对象（含绝对路径，供会话区降级时复制） */
+type DragInfo =
+  | { kind: 'entry'; dir: string; filename: string; path: string }
+  | { kind: 'dir'; name: string; path: string };
+
+/** dragstart 时的本地快照：无有效落点 / 提交失败时还原 */
+type DragSnapshot =
+  | { kind: 'entry'; dir: string; entries: PromptEntry[] }
+  | { kind: 'dir'; dirs: PromptDir[] };
 
 /* ---- 菜单定义（顺序固定，见设计 v3 7.3） ---- */
 
@@ -356,6 +384,13 @@ function Panel() {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [form, setForm] = useState<InlineForm | null>(null);
+  // 拖动排序（Task 7）
+  const [drag, setDrag] = useState<DragInfo | null>(null);
+  const [dropTargetDir, setDropTargetDir] = useState<string | null>(null);
+  const dragRef = useRef<DragInfo | null>(null); // 供 dragend/异步收尾读取的最新拖拽信息
+  const dragSnapshotRef = useRef<DragSnapshot | null>(null);
+  const dropHandledRef = useRef(false); // 本次拖拽是否已有有效落点（drop 已处理）
+  const lastDragPosRef = useRef<{ x: number; y: number } | null>(null);
 
   async function fetchState() {
     try {
@@ -371,6 +406,17 @@ function Panel() {
     hana.ready();
     hana.ui.resize({ height: 480 });
     fetchState();
+  }, []);
+
+  // 兜底：拖拽结束事件冒泡到 window（源元素在拖拽中被重排也不丢失收尾）；
+  // finishDrag 幂等（dragRef 为空即返回），与源元素上的 onDragEnd 双保险不冲突。
+  useEffect(() => {
+    function onWinDragEnd() {
+      finishDrag();
+    }
+    window.addEventListener('dragend', onWinDragEnd);
+    return () => window.removeEventListener('dragend', onWinDragEnd);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function toggleDir(name: string) {
@@ -395,6 +441,223 @@ function Panel() {
       }
       return next;
     });
+  }
+
+  /* ---- 拖动排序（同目录/目录行即时重排，落点 POST；设计 v3 7.4） ---- */
+
+  function startEntryDrag(e: ReactDragEvent<HTMLButtonElement>, entry: PromptEntry) {
+    e.dataTransfer.effectAllowed = 'move';
+    const path = absPath(state?.dataDir ?? null, entryKey(entry));
+    try {
+      // Firefox 需要 setData 才会启动拖拽；text/uri-list 留给宿主跨 iframe 文件拖放（Task 8 实测）
+      e.dataTransfer.setData('text/plain', path);
+      e.dataTransfer.setData('text/uri-list', fileUriFromPath(path));
+    } catch {
+      /* 个别环境限制 dataTransfer 格式，忽略 */
+    }
+    const info: DragInfo = { kind: 'entry', dir: entry.dir, filename: entry.filename, path };
+    dragRef.current = info;
+    setDrag(info);
+    setDropTargetDir(null);
+    dropHandledRef.current = false;
+    lastDragPosRef.current = { x: e.clientX, y: e.clientY };
+    const list = state?.directories.find((d) => d.name === entry.dir)?.entries;
+    dragSnapshotRef.current = list ? { kind: 'entry', dir: entry.dir, entries: [...list] } : null;
+    setMenu(null); // 拖拽期间不保留右键菜单，避免遮挡落点
+  }
+
+  function startDirDrag(e: ReactDragEvent<HTMLButtonElement>, dirName: string) {
+    e.dataTransfer.effectAllowed = 'move';
+    const path = absPath(state?.dataDir ?? null, dirName);
+    try {
+      e.dataTransfer.setData('text/plain', path);
+      e.dataTransfer.setData('text/uri-list', fileUriFromPath(path));
+    } catch {
+      /* ignore */
+    }
+    const info: DragInfo = { kind: 'dir', name: dirName, path };
+    dragRef.current = info;
+    setDrag(info);
+    setDropTargetDir(null);
+    dropHandledRef.current = false;
+    lastDragPosRef.current = { x: e.clientX, y: e.clientY };
+    dragSnapshotRef.current = { kind: 'dir', dirs: state?.directories ? [...state.directories] : [] };
+    setMenu(null);
+  }
+
+  /** 列表内重排：返回新数组；插入位置等于原位时返回 null（避免拖拽悬停抖动） */
+  function reorderLocal<T>(list: T[], from: number, to: number): T[] | null {
+    if (to === from || to === from + 1) return null;
+    const next = [...list];
+    const [item] = next.splice(from, 1);
+    next.splice(to > from ? to - 1 : to, 0, item);
+    return next;
+  }
+
+  function setDirEntries(dirName: string, entries: PromptEntry[]) {
+    setState((prev) =>
+      prev
+        ? {
+            ...prev,
+            directories: prev.directories.map((d) => (d.name === dirName ? { ...d, entries } : d)),
+          }
+        : prev,
+    );
+  }
+
+  /** 词条悬停：同目录词条即时重排；跨目录/目录拖拽不作为落点 */
+  function dragOverEntry(e: ReactDragEvent<HTMLButtonElement>, entry: PromptEntry) {
+    lastDragPosRef.current = { x: e.clientX, y: e.clientY };
+    const info = dragRef.current;
+    if (!info || info.kind !== 'entry' || info.dir !== entry.dir) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const list = state?.directories.find((d) => d.name === entry.dir)?.entries;
+    if (!list) return;
+    const from = list.findIndex((x) => x.filename === info.filename);
+    const idx = list.findIndex((x) => x.filename === entry.filename);
+    if (from === -1 || idx === -1) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const before = e.clientY < rect.top + rect.height / 2;
+    const next = reorderLocal(list, from, before ? idx : idx + 1);
+    if (next) setDirEntries(entry.dir, next);
+  }
+
+  /** 同目录词条落下：以当前（已即时重排）顺序 POST reorder */
+  function dropEntry(e: ReactDragEvent<HTMLButtonElement>, entry: PromptEntry) {
+    const info = dragRef.current;
+    if (!info || info.kind !== 'entry' || info.dir !== entry.dir) return;
+    e.preventDefault();
+    dropHandledRef.current = true;
+    const list = state?.directories.find((d) => d.name === entry.dir)?.entries;
+    if (!list) return;
+    const items = list.map((x) => x.filename);
+    void (async () => {
+      const r = await postAction({ type: 'reorder', dirName: entry.dir, items });
+      if (!r.ok) {
+        restoreDragSnapshot();
+        hana.toast.show({ message: r.error || '排序保存失败', type: 'error' });
+      }
+    })();
+  }
+
+  /** 目录标题行悬停：目录行拖拽 → 即时重排；词条跨目录拖拽 → 高亮为移动落点 */
+  function dragOverDirHead(e: ReactDragEvent<HTMLButtonElement>, dirName: string) {
+    lastDragPosRef.current = { x: e.clientX, y: e.clientY };
+    const info = dragRef.current;
+    if (!info) return;
+    if (info.kind === 'dir') {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const list = state?.directories ?? [];
+      const from = list.findIndex((d) => d.name === info.name);
+      const idx = list.findIndex((d) => d.name === dirName);
+      if (from === -1 || idx === -1) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const before = e.clientY < rect.top + rect.height / 2;
+      const next = reorderLocal(list, from, before ? idx : idx + 1);
+      if (next) setState((prev) => (prev ? { ...prev, directories: next } : prev));
+    } else if (info.kind === 'entry' && info.dir !== dirName) {
+      // 词条跨目录移动：仅标记落点，不本地移动（成败以服务端为准）
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      setDropTargetDir(dirName);
+    }
+  }
+
+  /** 离开目录标题行：若移出该行则清除高亮（标题行内部子元素间移动不触发） */
+  function dragLeaveDirHead(e: ReactDragEvent<HTMLButtonElement>) {
+    const related = e.relatedTarget;
+    if (related && e.currentTarget.contains(related as Node)) return;
+    const name = e.currentTarget.dataset.dirname;
+    setDropTargetDir((prev) => (prev === name ? null : prev));
+  }
+
+  /** 目录标题行落下：目录重排 / 词条跨目录移动 */
+  function dropDirHead(e: ReactDragEvent<HTMLButtonElement>, dirName: string) {
+    const info = dragRef.current;
+    if (!info) return;
+    e.preventDefault();
+    dropHandledRef.current = true;
+    setDropTargetDir(null);
+    if (info.kind === 'dir') {
+      const names = (state?.directories ?? []).map((d) => d.name);
+      void (async () => {
+        const r = await postAction({ type: 'reorder', dirName: null, items: names });
+        if (!r.ok) {
+          restoreDragSnapshot();
+          hana.toast.show({ message: r.error || '排序保存失败', type: 'error' });
+        }
+      })();
+    } else if (info.kind === 'entry' && info.dir !== dirName) {
+      const oldKey = `${info.dir}/${info.filename}`;
+      void (async () => {
+        const r = await postAction({ type: 'move-prompt', path: oldKey, targetDir: dirName });
+        if (!r.ok) {
+          // 重名等失败：toast + 本地还原（快照为 dragstart 顺序）
+          restoreDragSnapshot();
+          hana.toast.show({ message: r.error || '移动失败', type: 'error' });
+        } else {
+          // 展开中的卡片跟随新目录（entryKey 含目录名）
+          migrateExpandAfterMove(oldKey, `${dirName}/${info.filename}`);
+        }
+      })();
+    }
+  }
+
+  /** 无有效落点 / 提交失败时，把本地顺序还原为 dragstart 快照 */
+  function restoreDragSnapshot() {
+    const snap = dragSnapshotRef.current;
+    if (!snap) return;
+    dragSnapshotRef.current = null;
+    setState((prev) => {
+      if (!prev) return prev;
+      if (snap.kind === 'entry') {
+        return {
+          ...prev,
+          directories: prev.directories.map((d) =>
+            d.name === snap.dir ? { ...d, entries: snap.entries } : d,
+          ),
+        };
+      }
+      return { ...prev, directories: snap.dirs };
+    });
+  }
+
+  function migrateExpandAfterMove(oldKey: string, newKey: string) {
+    setExpandedKeys((prev) => {
+      if (!prev.has(oldKey)) return prev;
+      const next = new Set(prev);
+      next.delete(oldKey);
+      next.add(newKey);
+      return next;
+    });
+  }
+
+  /** 拖拽收尾：无有效落点则还原；最后位置贴近/超出 widget 边界 → 会话区降级（复制路径） */
+  function finishDrag() {
+    const info = dragRef.current;
+    if (!info) return;
+    const dropHandled = dropHandledRef.current;
+    const pos = lastDragPosRef.current;
+    if (!dropHandled && pos) {
+      const nearEdge =
+        pos.x <= DRAG_EDGE_MARGIN ||
+        pos.y <= DRAG_EDGE_MARGIN ||
+        pos.x >= window.innerWidth - DRAG_EDGE_MARGIN ||
+        pos.y >= window.innerHeight - DRAG_EDGE_MARGIN;
+      if (nearEdge) {
+        // 降级路径：宿主跨 iframe 文件拖放能力待 Task 8 实测，先复制路径提示粘贴
+        void hana.clipboard.writeText(info.path);
+        hana.toast.show({ message: '已复制路径，粘贴发送给 Agent', type: 'info' });
+      }
+    }
+    if (!dropHandled) restoreDragSnapshot();
+    dragRef.current = null;
+    setDrag(null);
+    setDropTargetDir(null);
+    dropHandledRef.current = false;
+    lastDragPosRef.current = null;
   }
 
   /** POST /api/action；响应带 state 时回填 */
@@ -552,7 +815,13 @@ function Panel() {
     }
 
     return (
-      <div className="ps-shelf">
+      <div
+        className="ps-shelf"
+        onDragOver={(e) => {
+          // 仅跟踪位置用于会话区降级判定；空白处不 preventDefault → 不构成落点
+          lastDragPosRef.current = { x: e.clientX, y: e.clientY };
+        }}
+      >
         {state.directories.map((dir) => {
           const collapsed = collapsedDirs.has(dir.name);
           const dirForm = form && formAnchoredAtDir(form, dir.name) ? form : null;
@@ -560,9 +829,16 @@ function Panel() {
             <section key={dir.name} className="ps-dir">
               <button
                 type="button"
-                className="ps-dir-head"
+                className={`ps-dir-head${drag?.kind === 'dir' && drag.name === dir.name ? ' ps-dragging' : ''}${drag?.kind === 'entry' && drag.dir !== dir.name && dropTargetDir === dir.name ? ' ps-drop-target' : ''}`}
                 onClick={() => toggleDir(dir.name)}
                 onContextMenu={(e) => openMenu(e, 'dir', undefined, dir.name)}
+                onDragStart={(e) => startDirDrag(e, dir.name)}
+                onDragOver={(e) => dragOverDirHead(e, dir.name)}
+                onDragLeave={dragLeaveDirHead}
+                onDrop={(e) => dropDirHead(e, dir.name)}
+                onDragEnd={finishDrag}
+                data-dirname={dir.name}
+                draggable
                 aria-expanded={!collapsed}
               >
                 <span className={`ps-dir-arrow${collapsed ? ' ps-dir-arrow-collapsed' : ''}`}>
@@ -597,9 +873,14 @@ function Panel() {
                         <div key={key} className="ps-card">
                           <button
                             type="button"
-                            className="ps-card-head"
+                            className={`ps-card-head${drag?.kind === 'entry' && drag.dir === dir.name && drag.filename === entry.filename ? ' ps-dragging' : ''}`}
                             onClick={() => toggleEntry(key)}
                             onContextMenu={(e) => openMenu(e, 'entry', entry)}
+                            onDragStart={(e) => startEntryDrag(e, entry)}
+                            onDragOver={(e) => dragOverEntry(e, entry)}
+                            onDrop={(e) => dropEntry(e, entry)}
+                            onDragEnd={finishDrag}
+                            draggable
                             title="点击收起"
                           >
                             <span className="ps-card-title">{entry.title}</span>
@@ -621,9 +902,14 @@ function Panel() {
                       <button
                         key={key}
                         type="button"
-                        className="ps-pill"
+                        className={`ps-pill${drag?.kind === 'entry' && drag.dir === dir.name && drag.filename === entry.filename ? ' ps-dragging' : ''}`}
                         onClick={() => toggleEntry(key)}
                         onContextMenu={(e) => openMenu(e, 'entry', entry)}
+                        onDragStart={(e) => startEntryDrag(e, entry)}
+                        onDragOver={(e) => dragOverEntry(e, entry)}
+                        onDrop={(e) => dropEntry(e, entry)}
+                        onDragEnd={finishDrag}
+                        draggable
                         title={entry.title}
                       >
                         <span className="ps-pill-title">{entry.title}</span>

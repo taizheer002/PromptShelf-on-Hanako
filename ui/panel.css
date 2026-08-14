@@ -294,3 +294,17 @@ body[data-surface="widget"] .plugin-panel {
   font-size: 0.72rem;
   line-height: 1.5;
 }
+
+/* ---- 拖动排序（Task 7；CSS 变量，随主题，无硬编码色值） ---- */
+
+/* 拖拽中的源元素：半透明提示正在拖走 */
+.ps-dragging {
+  opacity: 0.45;
+}
+
+/* 词条跨目录移动的落点（目录标题行）：强调边框，覆盖 hover 背景 */
+.ps-dir-head.ps-drop-target,
+.ps-dir-head:hover.ps-drop-target {
+  border-color: var(--hana-plugin-accent);
+  background: var(--hana-plugin-accent-light);
+}
