@@ -1,4 +1,3 @@
-
 html,
 body,
 #root {
@@ -7,16 +6,203 @@ body,
 }
 
 body {
-  background: var(--hana-plugin-bg, #f8f5ed);
-  color: var(--hana-plugin-text, #3b3d3f);
+  background: transparent;
+  color: var(--hana-plugin-text);
 }
 
 .plugin-panel {
-  min-height: 100vh;
+  min-height: 100%;
   box-sizing: border-box;
   padding: 16px;
 }
 
 body[data-surface="widget"] .plugin-panel {
   padding: 12px;
+}
+
+/* ---- 目录 ---- */
+
+.ps-shelf {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ps-dir {
+  min-width: 0;
+}
+
+.ps-dir-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--hana-plugin-radius-input);
+  background: transparent;
+  color: var(--hana-plugin-text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ps-dir-head:hover {
+  background: var(--hana-plugin-accent-light);
+}
+
+.ps-dir-arrow {
+  flex-shrink: 0;
+  color: var(--hana-plugin-text-muted);
+  font-size: 0.7rem;
+  transition: transform var(--duration-fast, 0.15s) var(--ease-out, ease);
+}
+
+.ps-dir-arrow-collapsed {
+  transform: rotate(-90deg);
+}
+
+.ps-dir-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ps-dir-count {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--hana-plugin-text-muted);
+  font-size: 0.7rem;
+}
+
+/* ---- 胶囊 ---- */
+
+.ps-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0 6px 14px;
+}
+
+.ps-pill {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--hana-plugin-border);
+  border-radius: 999px;
+  background: var(--hana-plugin-bg-card);
+  color: var(--hana-plugin-text);
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    border-color var(--duration-fast, 0.15s) var(--ease-out, ease),
+    background var(--duration-fast, 0.15s) var(--ease-out, ease);
+}
+
+.ps-pill:hover {
+  border-color: var(--hana-plugin-accent);
+  background: var(--hana-plugin-accent-light);
+}
+
+.ps-pill-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- 展开卡片 ---- */
+
+.ps-card {
+  position: relative;
+  min-width: 0;
+  border: 1px solid var(--hana-plugin-border);
+  border-radius: var(--hana-plugin-radius-card);
+  background: var(--hana-plugin-bg-card);
+  overflow: hidden;
+}
+
+.ps-card-head {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 36px 8px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--hana-plugin-border);
+  background: transparent;
+  color: var(--hana-plugin-text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ps-card-head:hover {
+  background: var(--hana-plugin-accent-light);
+}
+
+.ps-card-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ps-card-body {
+  margin: 0;
+  max-height: 220px;
+  overflow: auto;
+  padding: 10px 12px;
+  color: var(--hana-plugin-text-light);
+  font-family: var(--hana-plugin-font-mono);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ps-card-close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--hana-plugin-radius-input);
+  background: transparent;
+  color: var(--hana-plugin-text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ps-card-close:hover {
+  background: var(--hana-plugin-accent-light);
+  color: var(--hana-plugin-text);
+}
+
+/* ---- 提示条 ---- */
+
+.ps-notice {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--hana-plugin-border);
+  border-radius: var(--hana-plugin-radius-input);
+  background: var(--hana-plugin-accent-light);
+  color: var(--hana-plugin-text-light);
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
