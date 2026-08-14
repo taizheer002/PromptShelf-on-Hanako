@@ -37,6 +37,20 @@ function renderShell(c, ctx, surface) {
 </head>
 <body data-hana-theme="${escapeAttr(theme)}" data-surface="${surface}">
   <div id="root" data-surface="${surface}"></div>
+  <div id="ps-err" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#c00;color:#fff;font:12px monospace;padding:6px;white-space:pre-wrap;display:none"></div>
+  <script>
+    // 诊断：先发旧式 ready（todo 插件同款，宿主必接受），让 overlay 消失
+    try { parent.postMessage({type:"ready"},"*"); } catch (e) {}
+    // 诊断：把 JS 错误显示到页面顶部，方便定位
+    window.addEventListener("error", function (e) {
+      var el = document.getElementById("ps-err");
+      if (el) { el.style.display = "block"; el.textContent = "JS error: " + (e.message || e.type) + " @ " + (e.filename || "") + ":" + (e.lineno || ""); }
+    });
+    window.addEventListener("unhandledrejection", function (e) {
+      var el = document.getElementById("ps-err");
+      if (el) { el.style.display = "block"; el.textContent = "Promise rejection: " + (e.reason && e.reason.message ? e.reason.message : String(e.reason)); }
+    });
+  </script>
   <script type="module">${js}</script>
 </body>
 </html>`;
