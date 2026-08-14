@@ -779,7 +779,7 @@ function Panel() {
     if (!r.ok) hana.toast.show({ message: r.error || '初始化失败', type: 'error' });
   }
 
-  function openMenu(e: ReactMouseEvent, kind: 'entry' | 'dir', entry?: PromptEntry, dirName?: string) {
+  function openMenu(e: ReactMouseEvent, kind: 'entry' | 'dir' | 'blank', entry?: PromptEntry, dirName?: string) {
     e.preventDefault();
     e.stopPropagation();
     setForm(null);
