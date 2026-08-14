@@ -63,8 +63,8 @@ function A0() {
   function pt(d, A, H) {
     this.props = d, this.context = A, this.refs = Ot, this.updater = H || ht;
   }
-  var Zt = pt.prototype = new xt();
-  Zt.constructor = pt, ct(Zt, yt.prototype), Zt.isPureReactComponent = !0;
+  var Lt = pt.prototype = new xt();
+  Lt.constructor = pt, ct(Lt, yt.prototype), Lt.isPureReactComponent = !0;
   var al = Array.isArray;
   function jt() {
   }
@@ -438,7 +438,7 @@ function z0() {
       };
     }
     var D = [], g = [], V = 1, N = null, R = 3, $ = !1, ht = !1, ct = !1, Ot = !1, yt = typeof setTimeout == "function" ? setTimeout : null, xt = typeof clearTimeout == "function" ? clearTimeout : null, pt = typeof setImmediate < "u" ? setImmediate : null;
-    function Zt(T) {
+    function Lt(T) {
       for (var x = O(g); x !== null; ) {
         if (x.callback === null) r(g);
         else if (x.startTime <= T)
@@ -448,7 +448,7 @@ function z0() {
       }
     }
     function al(T) {
-      if (ct = !1, Zt(T), !ht)
+      if (ct = !1, Lt(T), !ht)
         if (O(D) !== null)
           ht = !0, jt || (jt = !0, Jt());
         else {
@@ -471,7 +471,7 @@ function z0() {
             var J = R;
             try {
               l: {
-                for (Zt(T), N = O(D); N !== null && !(N.expirationTime > T && Zl()); ) {
+                for (Lt(T), N = O(D); N !== null && !(N.expirationTime > T && Zl()); ) {
                   var ft = N.callback;
                   if (typeof ft == "function") {
                     N.callback = null, R = N.priorityLevel;
@@ -479,10 +479,10 @@ function z0() {
                       N.expirationTime <= T
                     );
                     if (T = f.unstable_now(), typeof gt == "function") {
-                      N.callback = gt, Zt(T), x = !0;
+                      N.callback = gt, Lt(T), x = !0;
                       break l;
                     }
-                    N === O(D) && r(D), Zt(T);
+                    N === O(D) && r(D), Lt(T);
                   } else r(D);
                   N = O(D);
                 }
@@ -875,7 +875,7 @@ function M0() {
     }
     return null;
   }
-  var N = Object.assign, R = /* @__PURE__ */ Symbol.for("react.element"), $ = /* @__PURE__ */ Symbol.for("react.transitional.element"), ht = /* @__PURE__ */ Symbol.for("react.portal"), ct = /* @__PURE__ */ Symbol.for("react.fragment"), Ot = /* @__PURE__ */ Symbol.for("react.strict_mode"), yt = /* @__PURE__ */ Symbol.for("react.profiler"), xt = /* @__PURE__ */ Symbol.for("react.consumer"), pt = /* @__PURE__ */ Symbol.for("react.context"), Zt = /* @__PURE__ */ Symbol.for("react.forward_ref"), al = /* @__PURE__ */ Symbol.for("react.suspense"), jt = /* @__PURE__ */ Symbol.for("react.suspense_list"), w = /* @__PURE__ */ Symbol.for("react.memo"), qt = /* @__PURE__ */ Symbol.for("react.lazy"), Nt = /* @__PURE__ */ Symbol.for("react.activity"), Zl = /* @__PURE__ */ Symbol.for("react.memo_cache_sentinel"), Al = Symbol.iterator;
+  var N = Object.assign, R = /* @__PURE__ */ Symbol.for("react.element"), $ = /* @__PURE__ */ Symbol.for("react.transitional.element"), ht = /* @__PURE__ */ Symbol.for("react.portal"), ct = /* @__PURE__ */ Symbol.for("react.fragment"), Ot = /* @__PURE__ */ Symbol.for("react.strict_mode"), yt = /* @__PURE__ */ Symbol.for("react.profiler"), xt = /* @__PURE__ */ Symbol.for("react.consumer"), pt = /* @__PURE__ */ Symbol.for("react.context"), Lt = /* @__PURE__ */ Symbol.for("react.forward_ref"), al = /* @__PURE__ */ Symbol.for("react.suspense"), jt = /* @__PURE__ */ Symbol.for("react.suspense_list"), w = /* @__PURE__ */ Symbol.for("react.memo"), qt = /* @__PURE__ */ Symbol.for("react.lazy"), Nt = /* @__PURE__ */ Symbol.for("react.activity"), Zl = /* @__PURE__ */ Symbol.for("react.memo_cache_sentinel"), Al = Symbol.iterator;
   function Jt(t) {
     return t === null || typeof t != "object" ? null : (t = Al && t[Al] || t["@@iterator"], typeof t == "function" ? t : null);
   }
@@ -907,7 +907,7 @@ function M0() {
           return t.displayName || "Context";
         case xt:
           return (t._context.displayName || "Context") + ".Consumer";
-        case Zt:
+        case Lt:
           var l = t.render;
           return t = t.displayName, t || (t = l.displayName || l.name || "", t = t !== "" ? "ForwardRef(" + t + ")" : "ForwardRef"), t;
         case w:
@@ -2376,7 +2376,7 @@ Error generating stack: ` + a.message + `
               case xt:
                 i = 9;
                 break t;
-              case Zt:
+              case Lt:
                 i = 11;
                 break t;
               case w:
@@ -5205,7 +5205,7 @@ Error generating stack: ` + a.message + `
           else {
             if (t != null) {
               var u = t.$$typeof;
-              if (u === Zt) {
+              if (u === Lt) {
                 l.tag = 11, l = Qr(
                   null,
                   l,
@@ -7148,7 +7148,7 @@ Error generating stack: ` + a.message + `
     cacheSignal: function() {
       return Ft(Yt).controller.signal;
     }
-  }, Dh = typeof WeakMap == "function" ? WeakMap : Map, mt = 0, zt = null, tt = null, et = 0, St = 0, pl = null, Te = !1, Na = !1, Hc = !1, ie = 0, Ct = 0, Ae = 0, Pe = 0, Bc = 0, El = 0, Ra = 0, Eu = null, rl = null, jc = !1, Mn = 0, Eo = 0, Un = 1 / 0, Nn = null, ze = null, Lt = 0, _e = null, Ca = null, ce = 0, qc = 0, Yc = null, To = null, Tu = 0, Gc = null;
+  }, Dh = typeof WeakMap == "function" ? WeakMap : Map, mt = 0, zt = null, tt = null, et = 0, St = 0, pl = null, Te = !1, Na = !1, Hc = !1, ie = 0, Ct = 0, Ae = 0, Pe = 0, Bc = 0, El = 0, Ra = 0, Eu = null, rl = null, jc = !1, Mn = 0, Eo = 0, Un = 1 / 0, Nn = null, ze = null, Zt = 0, _e = null, Ca = null, ce = 0, qc = 0, Yc = null, To = null, Tu = 0, Gc = null;
   function Tl() {
     return (mt & 2) !== 0 && et !== 0 ? et & -et : T.T !== null ? Kc() : qf();
   }
@@ -7662,7 +7662,7 @@ Error generating stack: ` + a.message + `
     t.cancelPendingCommit = null;
     do
       Hn();
-    while (Lt !== 0);
+    while (Zt !== 0);
     if ((mt & 6) !== 0) throw Error(r(327));
     if (l !== null) {
       if (l === t.current) throw Error(r(177));
@@ -7683,12 +7683,12 @@ Error generating stack: ` + a.message + `
           mt = i, x.p = u, T.T = a;
         }
       }
-      Lt = 1, Ho(), Bo(), jo();
+      Zt = 1, Ho(), Bo(), jo();
     }
   }
   function Ho() {
-    if (Lt === 1) {
-      Lt = 0;
+    if (Zt === 1) {
+      Zt = 0;
       var t = _e, l = Ca, e = (l.flags & 13878) !== 0;
       if ((l.subtreeFlags & 13878) !== 0 || e) {
         e = T.T, T.T = null;
@@ -7745,12 +7745,12 @@ Error generating stack: ` + a.message + `
           mt = u, x.p = a, T.T = e;
         }
       }
-      t.current = l, Lt = 2;
+      t.current = l, Zt = 2;
     }
   }
   function Bo() {
-    if (Lt === 2) {
-      Lt = 0;
+    if (Zt === 2) {
+      Zt = 0;
       var t = _e, l = Ca, e = (l.flags & 8772) !== 0;
       if ((l.subtreeFlags & 8772) !== 0 || e) {
         e = T.T, T.T = null;
@@ -7764,14 +7764,14 @@ Error generating stack: ` + a.message + `
           mt = u, x.p = a, T.T = e;
         }
       }
-      Lt = 3;
+      Zt = 3;
     }
   }
   function jo() {
-    if (Lt === 4 || Lt === 3) {
-      Lt = 0, tm();
+    if (Zt === 4 || Zt === 3) {
+      Zt = 0, tm();
       var t = _e, l = Ca, e = ce, a = To;
-      (l.subtreeFlags & 10256) !== 0 || (l.flags & 10256) !== 0 ? Lt = 5 : (Lt = 0, Ca = _e = null, qo(t, t.pendingLanes));
+      (l.subtreeFlags & 10256) !== 0 || (l.flags & 10256) !== 0 ? Zt = 5 : (Zt = 0, Ca = _e = null, qo(t, t.pendingLanes));
       var u = t.pendingLanes;
       if (u === 0 && (ze = null), ni(e), l = l.stateNode, hl && typeof hl.onCommitFiberRoot == "function")
         try {
@@ -7806,14 +7806,14 @@ Error generating stack: ` + a.message + `
     return Ho(), Bo(), jo(), Yo();
   }
   function Yo() {
-    if (Lt !== 5) return !1;
+    if (Zt !== 5) return !1;
     var t = _e, l = qc;
     qc = 0;
     var e = ni(ce), a = T.T, u = x.p;
     try {
       x.p = 32 > e ? 32 : e, T.T = null, e = Yc, Yc = null;
       var n = _e, i = ce;
-      if (Lt = 0, Ca = _e = null, ce = 0, (mt & 6) !== 0) throw Error(r(331));
+      if (Zt = 0, Ca = _e = null, ce = 0, (mt & 6) !== 0) throw Error(r(331));
       var c = mt;
       if (mt |= 4, bo(n.current), vo(
         n,
@@ -7943,7 +7943,7 @@ Error generating stack: ` + a.message + `
       var u = a.next, n = Lo(a, l);
       n === 0 ? (a.next = null, e === null ? Bn = u : e.next = u, u === null && (Ba = e)) : (e = a, (t !== 0 || (n & 3) !== 0) && (jn = !0)), a = u;
     }
-    Lt !== 0 && Lt !== 5 || Au(t), Oe !== 0 && (Oe = 0);
+    Zt !== 0 && Zt !== 5 || Au(t), Oe !== 0 && (Oe = 0);
   }
   function Lo(t, l) {
     for (var e = t.suspendedLanes, a = t.pingedLanes, u = t.expirationTimes, n = t.pendingLanes & -62914561; 0 < n; ) {
@@ -7977,7 +7977,7 @@ Error generating stack: ` + a.message + `
     return a !== null && a !== null && ei(a), t.callbackPriority = 2, t.callbackNode = null, 2;
   }
   function Zo(t, l) {
-    if (Lt !== 0 && Lt !== 5)
+    if (Zt !== 0 && Zt !== 5)
       return t.callbackNode = null, t.callbackPriority = 0, null;
     var e = t.callbackNode;
     if (Hn() && t.callbackNode !== e)
@@ -10736,8 +10736,8 @@ function J0(f = {}) {
     const ct = j(), Ot = ht.timeoutMs ?? X;
     return new Promise((yt, xt) => {
       const pt = () => {
-        b.removeEventListener("message", Zt), b.clearTimeout(al);
-      }, Zt = (w) => {
+        b.removeEventListener("message", Lt), b.clearTimeout(al);
+      }, Lt = (w) => {
         if (!Vd(w, O, r))
           return;
         const qt = Qd(w.data);
@@ -10751,7 +10751,7 @@ function J0(f = {}) {
           message: `Plugin host request timed out: ${R}.`
         }));
       }, Ot);
-      b.addEventListener("message", Zt);
+      b.addEventListener("message", Lt);
       const jt = {
         protocol: Of,
         version: Mf,
@@ -11271,14 +11271,14 @@ function Df({
       "」？此操作不可撤销。"
     ] }),
     f.kind === "confirm-delete-dir" && /* @__PURE__ */ U.jsxs("div", { className: "ps-inline-hint", children: [
-      "删除目录「",
+      "确认删除目录「",
       f.dirName,
-      "」？目录非空会被拒绝，请先清空词条。"
+      "」？将删除其中的所有词条，此操作不可撤销。"
     ] }),
     N && /* @__PURE__ */ U.jsx("div", { className: "ps-inline-error", children: N }),
     /* @__PURE__ */ U.jsx("div", { className: "ps-inline-row", children: r ? /* @__PURE__ */ U.jsxs(U.Fragment, { children: [
-      /* @__PURE__ */ U.jsx(Xa, { size: "sm", variant: "danger", loading: g, onClick: () => ht(ct()), children: "删除" }),
-      /* @__PURE__ */ U.jsx(Xa, { size: "sm", variant: "ghost", onClick: O, children: "取消" })
+      /* @__PURE__ */ U.jsx(Xa, { size: "sm", variant: "danger", onClick: O, children: "取消" }),
+      /* @__PURE__ */ U.jsx(Xa, { size: "sm", variant: "ghost", loading: g, onClick: () => ht(ct()), children: "确认删除" })
     ] }) : /* @__PURE__ */ U.jsxs(U.Fragment, { children: [
       /* @__PURE__ */ U.jsx(
         Xa,
@@ -11312,7 +11312,7 @@ function iy({
 }
 function cy() {
   const [f, b] = it.useState(null), [O, r] = it.useState(/* @__PURE__ */ new Set()), [X, j] = it.useState(/* @__PURE__ */ new Set()), [Q, Y] = it.useState(null), [D, g] = it.useState(null), [V, N] = it.useState(!1), [R, $] = it.useState(null), [ht, ct] = it.useState(null), Ot = it.useRef(null), yt = it.useRef(null), xt = it.useRef(!1), pt = it.useRef(null);
-  async function Zt() {
+  async function Lt() {
     try {
       const B = await (await vt.api.fetch("api/state")).json();
       b({ ...zf, ...B });
@@ -11321,10 +11321,10 @@ function cy() {
     }
   }
   it.useEffect(() => {
-    vt.ready(), vt.ui.resize({ height: 9999 }), Zt();
+    vt.ready(), vt.ui.resize({ height: 9999 }), Lt();
   }, []), it.useEffect(() => {
     function S() {
-      document.hidden || Zt();
+      document.hidden || Lt();
     }
     return document.addEventListener("visibilitychange", S), window.addEventListener("focus", S), () => {
       document.removeEventListener("visibilitychange", S), window.removeEventListener("focus", S);
@@ -11345,7 +11345,7 @@ function cy() {
     j((B) => {
       const M = new Set(B);
       return M.has(S) ? M.delete(S) : M.add(S), M;
-    });
+    }), Lt();
   }
   const w = it.useRef(null);
   function qt(S) {

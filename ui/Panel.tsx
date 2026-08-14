@@ -350,18 +350,18 @@ function InlineForm({
       )}
       {form.kind === 'confirm-delete-dir' && (
         <div className="ps-inline-hint">
-          删除目录「{form.dirName}」？目录非空会被拒绝，请先清空词条。
+          确认删除目录「{form.dirName}」？将删除其中的所有词条，此操作不可撤销。
         </div>
       )}
       {error && <div className="ps-inline-error">{error}</div>}
       <div className="ps-inline-row">
         {isDelete ? (
           <>
-            <Button size="sm" variant="danger" loading={busy} onClick={() => run(confirmPayload())}>
-              删除
-            </Button>
-            <Button size="sm" variant="ghost" onClick={done}>
+            <Button size="sm" variant="danger" onClick={done}>
               取消
+            </Button>
+            <Button size="sm" variant="ghost" loading={busy} onClick={() => run(confirmPayload())}>
+              确认删除
             </Button>
           </>
         ) : (
@@ -506,6 +506,9 @@ function Panel() {
       }
       return next;
     });
+    // 折叠/展开时顺带刷新（宿主 widget 的 visibilitychange/focus 不触发，
+    // 用用户交互兜底同步 Agent 工具/外部写入的最新内容）
+    fetchState();
   }
 
   /* ---- 双击复制（设计 v3 7.2 遗漏补项） ---- */
