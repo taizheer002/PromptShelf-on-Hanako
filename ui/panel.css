@@ -1,0 +1,22 @@
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--hana-plugin-bg, #f8f5ed);
+  color: var(--hana-plugin-text, #3b3d3f);
+}
+
+.plugin-panel {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 16px;
+}
+
+body[data-surface="widget"] .plugin-panel {
+  padding: 12px;
+}
