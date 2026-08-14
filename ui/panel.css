@@ -334,3 +334,60 @@ body[data-surface="widget"] .plugin-panel {
   border-color: var(--hana-plugin-accent);
   background: var(--hana-plugin-accent-light);
 }
+
+/* ---- 标题问号圈（操作提示，替代常驻小字） ---- */
+
+.ps-help {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1em;
+  height: 1.1em;
+  border: 1px solid var(--ps-help-color, var(--hana-plugin-text-muted));
+  border-radius: 50%;
+  color: var(--ps-help-color, var(--hana-plugin-text-muted));
+  font-size: 0.7rem; /* 与提示小字同字号 */
+  line-height: 1;
+  cursor: help;
+  user-select: none;
+  transition: transform var(--duration-fast, 0.15s) var(--ease-out, ease);
+}
+
+.ps-help:hover,
+.ps-help:focus-visible {
+  transform: scale(1.15);
+  outline: none;
+}
+
+.ps-help-icon {
+  font-size: 0.8em;
+  transform: translateY(-0.02em);
+}
+
+.ps-help-pop {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 260px;
+  padding: 8px 10px;
+  background: var(--hana-plugin-bg-card);
+  color: var(--hana-plugin-text-light);
+  border: 1px solid var(--hana-plugin-border);
+  border-radius: var(--hana-plugin-radius-input, 4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  font-weight: 400;
+  text-align: left;
+  white-space: normal;
+  z-index: 40;
+}
+
+.ps-help:hover .ps-help-pop,
+.ps-help:focus-visible .ps-help-pop {
+  display: block;
+}

@@ -19,6 +19,19 @@ import {
 import '@hana/plugin-components/styles.css';
 import './panel.css';
 
+/** 标题右侧的问号圈：灰度随主题（亮主题比底色亮 15%，暗主题比底色暗 15%），
+ * hover 显示操作提示（替代原来的提示小字，避免常驻噪音） */
+function HelpHint({ text }: { text: string }) {
+  return (
+    <span className="ps-help" role="button" tabIndex={0} aria-label="使用提示">
+      <span className="ps-help-icon">?</span>
+      <span className="ps-help-pop" role="tooltip">
+        {text}
+      </span>
+    </span>
+  );
+}
+
 type PromptEntry = {
   dir: string;
   filename: string;
@@ -467,6 +480,18 @@ function Panel() {
     // 高度传大值，宿主 clamp 到侧栏可用全高（viewportHeight - chrome）
     hana.ui.resize({ height: 9999 });
     fetchState();
+  }, []);
+
+  // 问号圈灰度：读取主题底色亮度，亮主题往白偏 15%、暗主题往黑偏 15%（融入背景的低存在感灰）
+  useEffect(() => {
+    const cs = getComputedStyle(document.documentElement);
+    const bg = (cs.getPropertyValue('--hana-plugin-bg') || '#F8F5ED').trim();
+    const m = bg.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)/);
+    if (m) {
+      const lum = (0.299 * Number(m[1]) + 0.587 * Number(m[2]) + 0.114 * Number(m[3])) / 255;
+      const mix = `color-mix(in srgb, ${bg} 85%, ${lum > 0.5 ? 'white' : 'black'} 15%)`;
+      document.documentElement.style.setProperty('--ps-help-color', mix);
+    }
   }, []);
 
   // Agent 工具/外部编辑写入后，聚焦或重新可见时刷新（设计 v3 5.5；
@@ -1082,7 +1107,9 @@ function Panel() {
     <HanaThemeProvider mode="inherit" className="plugin-panel">
       <CardShell
         title="PromptShelf"
-        description="提示词架：右键词条/目录操作，单击胶囊展开预览，点标题栏或 × 收起。"
+        actions={
+          <HelpHint text="提示词架：右键词条/目录操作，单击胶囊展开预览，点标题栏或 × 收起。" />
+        }
       >
         {state && (
           <WarningBar state={state} rebuilding={rebuilding} onRebuild={handleRebuild} />
