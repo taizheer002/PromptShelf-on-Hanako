@@ -118,6 +118,30 @@ function ContextMenu({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  // 打开时实测菜单真实尺寸（第一帧先渲染在视口外占位），超出视口底部/右侧
+  // 时向上/向左翻转；极端情况下再钳制到边距，避免估算常量导致截断不可达
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+
+  useEffect(() => {
+    if (!menu) {
+      setPos(null);
+      return;
+    }
+    const el = ref.current;
+    if (!el) return;
+    const margin = 8;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    let left = menu.x;
+    let top = menu.y;
+    if (top + el.offsetHeight + margin > vh) {
+      top = vh - el.offsetHeight - margin;
+    }
+    if (left + el.offsetWidth + margin > vw) {
+      left = vw - el.offsetWidth - margin;
+    }
+    setPos({ left: Math.max(margin, left), top: Math.max(margin, top) });
+  }, [menu]);
 
   useEffect(() => {
     if (!menu) return;
@@ -148,12 +172,13 @@ function ContextMenu({
 
   if (!menu) return null;
 
-  // 越界保护：菜单贴边时收回视口内
-  const left = Math.min(menu.x, Math.max(0, window.innerWidth - 220));
-  const top = Math.min(menu.y, Math.max(0, window.innerHeight - 120));
-
   return (
-    <div ref={ref} className="ps-menu" style={{ left, top }} role="menu">
+    <div
+      ref={ref}
+      className="ps-menu"
+      style={pos ? { left: pos.left, top: pos.top } : { left: -9999, top: -9999 }}
+      role="menu"
+    >
       {items.map((item) => (
         <Fragment key={item.key}>
           {item.separatorBefore && <div className="ps-menu-sep" />}
