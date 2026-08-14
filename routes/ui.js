@@ -1,4 +1,18 @@
 
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+function loadPanelAssets() {
+  // routes/ 的上一级是插件根目录；assets 由 vite 构建产出
+  const pluginDir = path.resolve(__dirname, "..");
+  const js = fs.readFileSync(path.join(pluginDir, "assets", "panel.js"), "utf-8");
+  const css = fs.readFileSync(path.join(pluginDir, "assets", "panel.css"), "utf-8");
+  return { js, css };
+}
+
 export default function registerPluginUiRoutes(app, ctx) {
   app.get("/page", (c) => c.html(renderShell(c, ctx, "page")));
   app.get("/widget", (c) => c.html(renderShell(c, ctx, "widget")));
@@ -7,12 +21,9 @@ export default function registerPluginUiRoutes(app, ctx) {
 function renderShell(c, ctx, surface) {
   const hanaCss = c.req.query("hana-css") || "";
   const theme = c.req.query("hana-theme") || "inherit";
-  // 本地连接凭证是 loopback token（iframe URL 的 query 参数）。assets 请求不带该
-  // token 会被凭证中间件 403，导致 panel.js 无法加载（widget 白屏/握手失败）。
-  // 与 hanako-todo-plugin 的 /minimal 路由同思路：把 token 拼进 assets URL。
-  const token = c.req.query("token") || "";
-  const tokenSuffix = token ? `?token=${encodeURIComponent(token)}` : "";
-  const assetBase = `/api/plugins/${encodeURIComponent(ctx.pluginId)}/assets`;
+  // assets 全部内联：widget iframe 只发一个文档请求（带 loopback token，必然 200），
+  // 不再依赖 /assets/* 的凭证链路（hanako-todo-plugin 验证过的模式）。
+  const { js, css } = loadPanelAssets();
   const title = "PromptShelf";
 
   return `<!doctype html>
@@ -22,11 +33,11 @@ function renderShell(c, ctx, surface) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)}</title>
   ${hanaCss ? `<link rel="stylesheet" href="${escapeAttr(hanaCss)}">` : ""}
-  <link rel="stylesheet" href="${assetBase}/panel.css${tokenSuffix}">
+  <style>${css}</style>
 </head>
 <body data-hana-theme="${escapeAttr(theme)}" data-surface="${surface}">
   <div id="root" data-surface="${surface}"></div>
-  <script type="module" src="${assetBase}/panel.js${tokenSuffix}"></script>
+  <script type="module">${js}</script>
 </body>
 </html>`;
 }
