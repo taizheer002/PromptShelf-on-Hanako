@@ -206,3 +206,91 @@ body[data-surface="widget"] .plugin-panel {
   font-size: 0.75rem;
   line-height: 1.4;
 }
+
+/* ---- 右键菜单 ---- */
+
+.ps-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 180px;
+  max-width: 240px;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--hana-plugin-border);
+  border-radius: var(--hana-plugin-radius-input);
+  background: var(--hana-plugin-bg-card);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+}
+
+.ps-menu-item {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--hana-plugin-radius-input);
+  background: transparent;
+  color: var(--hana-plugin-text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ps-menu-item:hover {
+  background: var(--hana-plugin-accent-light);
+}
+
+.ps-menu-item-danger {
+  color: var(--hana-plugin-danger);
+}
+
+.ps-menu-item-disabled,
+.ps-menu-item-disabled:hover {
+  background: transparent;
+  color: var(--hana-plugin-text-muted);
+  cursor: default;
+}
+
+.ps-menu-sep {
+  height: 1px;
+  margin: 4px 8px;
+  background: var(--hana-plugin-border);
+}
+
+/* ---- 内联表单（新建/重命名/删除确认） ---- */
+
+.ps-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0 6px 14px;
+  padding: 8px 10px;
+  border: 1px solid var(--hana-plugin-border);
+  border-radius: var(--hana-plugin-radius-input);
+  background: var(--hana-plugin-bg-card);
+}
+
+.ps-inline-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ps-inline-textarea {
+  min-width: 0;
+}
+
+.ps-inline-error {
+  color: var(--hana-plugin-danger);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.ps-inline-hint {
+  color: var(--hana-plugin-text-muted);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
