@@ -391,9 +391,9 @@ function WarningBar({
   // 索引损坏提示只在已初始化（dataDir 已配置）时有意义：未初始化时 /api/state 的
   // fallback 会带 indexHealthy:false，但那不是索引损坏，而是尚未初始化
   const showIndex = !!dataDir && indexHealthy === false;
-  // 索引损坏时 warning 是同一提示链（pickFallbackIndex 的 fallback 说明），由损坏块
-  // 统一承载并带重建入口，不重复展示；其余情况单独展示运行期 warning
-  const showWarning = !showIndex && !!warning;
+  // 运行期 warning 同样只在已初始化时展示：未初始化首屏由引导页（EmptyState）承载，
+  // 不再叠 fallback 警告横幅（Task 8 M1 首开横幅重复）
+  const showWarning = !!dataDir && !showIndex && !!warning;
   const showDegraded = !!degraded;
   if (!showIndex && !showWarning && !showDegraded) return null;
   return (
@@ -681,11 +681,12 @@ function Panel() {
     const dropHandled = dropHandledRef.current;
     const pos = lastDragPosRef.current;
     if (!dropHandled && pos) {
+      // 会话区在 widget 左侧（宿主右侧侧栏），仅左缘贴近视口边缘触发「已复制路径」降级，
+      // 其余三边不判定，避免拖到 widget 内部边缘时误触发（Task 7 M1 贴边误触发）
       const nearEdge =
-        pos.x <= DRAG_EDGE_MARGIN ||
-        pos.y <= DRAG_EDGE_MARGIN ||
-        pos.x >= window.innerWidth - DRAG_EDGE_MARGIN ||
-        pos.y >= window.innerHeight - DRAG_EDGE_MARGIN;
+        pos.x <= DRAG_EDGE_MARGIN &&
+        pos.y >= 0 &&
+        pos.y <= window.innerHeight;
       if (nearEdge) {
         // 降级路径：宿主跨 iframe 文件拖放能力待 Task 8 实测，先复制路径提示粘贴
         void hana.clipboard.writeText(info.path);
@@ -768,7 +769,8 @@ function Panel() {
           }
           break;
         case 'copy':
-          await hana.clipboard.writeText(entry.content);
+          // 复制只带正文，frontmatter（title/created）不进剪贴板
+          await hana.clipboard.writeText(stripFrontmatter(entry.content));
           hana.toast.show({ message: '已复制正文', type: 'success' });
           break;
         case 'send': {

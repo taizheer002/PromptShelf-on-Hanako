@@ -1,11 +1,13 @@
 // routes/api.js
 import { ShelfStore } from '../lib/store.js';
+import { parseFrontmatter } from '../lib/index-core.js';
 import { sendSessionMessage } from '@hana/plugin-runtime';
 
 export default function registerPluginApiRoutes(app, ctx) {
   app.get('/api/state', (c) => {
     const store = ctx.pluginStore;
-    return c.json(store?.getState() ?? { dataDir: null, indexHealthy: false, warning: '未初始化', directories: [] });
+    // 未初始化时 warning 置 null：引导页（EmptyState）承担提示，避免首屏横幅重复（Task 8 M1）
+    return c.json(store?.getState() ?? { dataDir: null, indexHealthy: false, warning: null, directories: [] });
   });
   app.post('/api/action', async (c) => {
     const body = await c.req.json();
@@ -64,7 +66,8 @@ export default function registerPluginApiRoutes(app, ctx) {
           ? { sessionId, ...(sessionPath ? { sessionPath } : {}) }
           : { sessionPath };
         try {
-          const result = await sendSessionMessage(ctx, target, { text: entry.content });
+          // 只发正文：frontmatter（title/created）不进入会话消息
+          const result = await sendSessionMessage(ctx, target, { text: parseFrontmatter(entry.content).body });
           if (result && result.accepted === false) {
             return { ok: false, error: '会话拒绝接收消息' };
           }
