@@ -441,11 +441,21 @@ function Panel() {
   const dropHandledRef = useRef(false); // 本次拖拽是否已有有效落点（drop 已处理）
   const lastDragPosRef = useRef<{ x: number; y: number } | null>(null);
 
+  const collapsedInitRef = useRef(false);
+
   async function fetchState() {
     try {
       const res = await hana.api.fetch('api/state');
       const data = (await res.json()) as ShelfState;
-      setState({ ...EMPTY_STATE, ...data });
+      const next = { ...EMPTY_STATE, ...data };
+      setState(next);
+      // 首次加载：所有目录默认折叠（用户反馈：重启后不应全展开）
+      if (!collapsedInitRef.current && next.directories.length) {
+        collapsedInitRef.current = true;
+        setCollapsedDirs(new Set(next.directories.map((d) => d.name)));
+      }
+      // 内容变化后重新告知宿主高度（宿主 widget 容器可能按内容收缩）
+      hana.ui.resize({ height: 9999 });
     } catch {
       setState({ ...EMPTY_STATE, warning: '无法连接插件运行时，请重载插件后重试' });
     }
@@ -494,6 +504,8 @@ function Panel() {
       }
       return next;
     });
+    // 折叠/展开目录时顺带刷新（与卡片折叠同逻辑，同步最新数据）
+    fetchState();
   }
 
   function toggleEntry(key: string) {
