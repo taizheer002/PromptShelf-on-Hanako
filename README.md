@@ -4,8 +4,14 @@ Hana plugin id: `promptshelf`.
 
 ## Contents
 
-- `manifest.json`: plugin metadata and capability declarations.
-- `tools/create-note.js`: sample SessionFile-aware tool.
+- `manifest.json`: plugin metadata and capability declarations, including `dev.scenarios` smoke tests.
+- `tools/`: six Agent tools backed by `lib/store.js`:
+  - `search-prompts`: keyword search across titles and bodies (read-only).
+  - `read-prompt`: read an entry's full text by `<dir>/<file>.md` path (read-only).
+  - `create-prompt`: create an entry, auto-creating the directory (review).
+  - `update-prompt`: replace an entry's body, keeping frontmatter (review).
+  - `delete-prompt`: delete an entry (review).
+  - `rebuild-order-index`: rebuild `.order.json` from disk, optionally preserving a corrupt copy (review).
 - `index.js`: sample lifecycle entry and EventBus handler.
 - `routes/ui.js`: iframe shell and static asset route.
 - `ui/Panel.tsx`: React iframe UI built with Hana SDK components.
@@ -23,7 +29,7 @@ Install by dragging this folder into Hana Settings > Plugins, or place it under 
 
 ## File and resource rules
 
-- The sample note tool writes plugin-owned output under `ctx.dataDir`, then returns it through `stageFile()` as SessionFile media.
+- The Agent tools read and write prompts through `ctx.pluginStore` (`lib/store.js`), which owns all disk I/O: atomic writes, backup, and corrupt-index preservation. Read-only tools declare `sessionPermission: { kind: 'readOnly' }`; write tools declare `{ kind: 'review' }` with a `describeSideEffect` summary.
 - If you add a feature that reads, edits, or watches user files, use `ctx.resources` with ResourceRef inputs and declare the matching `resource.read`, `resource.search`, `resource.write`, `resource.materialize`, or `resource.watch` capability.
 - Use `ctx.resources.watch()` / `ctx.resources.subscribe()` for backend resource watches, release the returned handle, and filter `resource.changed` / `resource.deleted` / `resource.renamed` bus events by `resourceKeys`.
 - Browser iframe code may open, pick, or request access to resources through `hana.resources.*`, but real file reads and writes belong in server-side plugin tools, routes, or lifecycle code.

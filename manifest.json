@@ -19,5 +19,20 @@
   },
   "ui": {
     "hostCapabilities": ["clipboard.writeText", "resource.pick", "resource.open"]
+  },
+  "dev": {
+    "scenarios": [
+      { "id": "tool-cycle", "steps": [
+        { "invokeTool": { "name": "create-prompt", "input": { "directory": "测试", "name": "demo", "content": "hello" } } },
+        { "expectToolText": "已创建" },
+        { "invokeTool": { "name": "search-prompts", "input": { "query": "hello" } } },
+        { "expectToolText": "demo" },
+        { "invokeTool": { "name": "update-prompt", "input": { "path": "测试/demo.md", "content": "world" } } },
+        { "invokeTool": { "name": "read-prompt", "input": { "path": "测试/demo.md" } } },
+        { "expectToolText": "world" },
+        { "invokeTool": { "name": "delete-prompt", "input": { "path": "测试/demo.md" } } },
+        { "expectToolText": "已删除" }
+      ]}
+    ]
   }
 }
