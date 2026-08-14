@@ -26,6 +26,7 @@ export default function registerPluginApiRoutes(app, ctx) {
       'delete-dir': () => store.deleteDir(args.name),
       'reorder': () => store.reorder(args.dirName, args.items),
       'rebuild': () => store.rebuildIndex(args.keepCorrupt !== false),
+      'rescan': async () => ({ ok: true, state: await store.rescan() }),
       // Task 8：初始化。dataDir 写入配置（HanaPluginConfigStore.set，异步）后重建 ShelfStore
       // 并 load。校验前置：先用目标目录建临时 store 尝试 load，不可读时不落配置、不替换
       // 现有 store，避免失败后留下指向坏目录的配置（config 无属性访问，只能 await get/set）。

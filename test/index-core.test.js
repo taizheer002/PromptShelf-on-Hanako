@@ -61,3 +61,18 @@ test('pickFallbackIndex: 主索引坏则用备份，都坏则扫描', () => {
   assert.equal(r2.source, 'scan');
   assert.ok(r2.warning);
 });
+
+
+test('mergeIntoIndex: 目录顺序以索引为准，磁盘新增补尾（与卡片同逻辑）', () => {
+  const disk = { dirs: ['写作', '实验', '阅读'], files: [
+    { dir: '写作', filename: 'a.md' },
+    { dir: '实验', filename: 'c.md' },
+    { dir: '阅读', filename: 'd.md' },
+  ]};
+  const index = { version: 1, directories: [
+    { name: '实验', items: ['c.md'] },
+    { name: '写作', items: ['a.md'] },
+  ]};
+  const merged = mergeIntoIndex(disk, index);
+  assert.deepEqual(merged.directories.map((d) => d.name), ['实验', '写作', '阅读']);
+});

@@ -443,12 +443,15 @@ function Panel() {
 
   const collapsedInitRef = useRef(false);
 
+  // 刷新 = 服务端强制重扫磁盘 + 重建内存（外部改文件、Agent 工具写入都能同步）
   async function fetchState() {
-    try {
-      const res = await hana.api.fetch('api/state');
-      const data = (await res.json()) as ShelfState;
-      const next = { ...EMPTY_STATE, ...data };
-      setState(next);
+    const r = await postAction({ type: 'rescan' });
+    if (!r.ok) {
+      setState({ ...EMPTY_STATE, warning: r.error || '刷新失败' });
+      return;
+    }
+    if (r.state) {
+      const next = { ...EMPTY_STATE, ...r.state };
       // 首次加载：所有目录默认折叠（用户反馈：重启后不应全展开）
       if (!collapsedInitRef.current && next.directories.length) {
         collapsedInitRef.current = true;
@@ -456,8 +459,6 @@ function Panel() {
       }
       // 内容变化后重新告知宿主高度（宿主 widget 容器可能按内容收缩）
       hana.ui.resize({ height: 9999 });
-    } catch {
-      setState({ ...EMPTY_STATE, warning: '无法连接插件运行时，请重载插件后重试' });
     }
   }
 
@@ -771,7 +772,7 @@ function Panel() {
   }
 
   /** POST /api/action；响应带 state 时回填 */
-  async function postAction(payload: Record<string, unknown>): Promise<{ ok: boolean; error?: string }> {
+  async function postAction(payload: Record<string, unknown>): Promise<{ ok: boolean; error?: string; state?: ShelfState }> {
     try {
       const res = await hana.api.fetch('api/action', {
         method: 'POST',
@@ -780,7 +781,7 @@ function Panel() {
       });
       const data = (await res.json()) as { ok?: boolean; error?: string; state?: ShelfState };
       if (data.state) setState({ ...EMPTY_STATE, ...data.state });
-      return { ok: data.ok === true, error: data.error };
+      return { ok: data.ok === true, error: data.error, state: data.state };
     } catch {
       return { ok: false, error: '请求失败，请重载插件后重试' };
     }
