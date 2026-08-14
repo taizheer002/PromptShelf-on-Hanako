@@ -26,6 +26,7 @@ body[data-surface="widget"] .plugin-panel {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-height: 100vh; /* 内容区撑满 iframe（iframe 已由宿主 clamp 到侧栏全高） */
 }
 
 .ps-dir {
@@ -162,8 +163,11 @@ body[data-surface="widget"] .plugin-panel {
 
 .ps-card-body {
   margin: 0;
-  max-height: 220px;
-  overflow: auto;
+  /* 预览最多 4 行，超出截断（用户反馈：当前显示全部正文太长） */
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   padding: 10px 12px;
   color: var(--hana-plugin-text-light);
   font-family: var(--hana-plugin-font-mono);

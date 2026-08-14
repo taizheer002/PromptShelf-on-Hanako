@@ -458,6 +458,21 @@ function Panel() {
     fetchState();
   }, []);
 
+  // Agent 工具/外部编辑写入后，聚焦或重新可见时刷新（设计 v3 5.5；
+  // 宿主 route 上下文拿不到会话，工具写入走 bus 事件无订阅方，故用可见性兜底）
+  useEffect(() => {
+    function refreshOnVisible() {
+      if (!document.hidden) fetchState();
+    }
+    document.addEventListener('visibilitychange', refreshOnVisible);
+    window.addEventListener('focus', refreshOnVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', refreshOnVisible);
+      window.removeEventListener('focus', refreshOnVisible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 兜底：拖拽结束事件冒泡到 window（源元素在拖拽中被重排也不丢失收尾）；
   // finishDrag 幂等（dragRef 为空即返回），与源元素上的 onDragEnd 双保险不冲突。
   useEffect(() => {
@@ -727,9 +742,9 @@ function Panel() {
         pos.y >= 0 &&
         pos.y <= window.innerHeight;
       if (nearEdge) {
-        // 降级路径：宿主跨 iframe 文件拖放能力待 Task 8 实测，先复制路径提示粘贴
+        // 降级路径：宿主暂不支持跨 iframe 文件拖放，复制路径提示粘贴
         void hana.clipboard.writeText(info.path);
-        hana.toast.show({ message: '已复制路径，粘贴发送给 Agent', type: 'info' });
+        hana.toast.show({ message: '已复制路径（宿主暂不支持跨 iframe 拖放），粘贴发送给 Agent', type: 'info' });
       }
     }
     if (!dropHandled) restoreDragSnapshot();
@@ -916,9 +931,8 @@ function Panel() {
       );
     }
 
-    const hasEntries = state.directories.some((d) => d.entries.length > 0);
-
-    if (!hasEntries && !form) {
+    // 只要有目录（即使全空）就渲染目录列表，空目录可见、可右键新建卡片
+    if (!state.directories.length && !form) {
       return (
         <div onContextMenu={(e) => openMenu(e, 'blank')}>
           <EmptyState
