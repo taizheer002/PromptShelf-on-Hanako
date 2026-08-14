@@ -76,6 +76,9 @@ function fileUriFromPath(path: string): string {
 /** 判定「拖出 widget 边界」的边缘余量（px）：最后拖拽位置进入该区域视为拖到会话区 */
 const DRAG_EDGE_MARGIN = 16;
 
+/** 双击=复制（设计 v3 7.2）：单击延迟该毫秒数判定，双击时取消展开/收起切换 */
+const DOUBLE_CLICK_DELAY_MS = 250;
+
 /** 拖拽中的对象（含绝对路径，供会话区降级时复制） */
 type DragInfo =
   | { kind: 'entry'; dir: string; filename: string; path: string }
@@ -482,6 +485,35 @@ function Panel() {
       return next;
     });
   }
+
+  /* ---- 双击复制（设计 v3 7.2 遗漏补项） ---- */
+  // 单击延迟 250ms 判定：双击时第二次 click 重启计时、dblclick 取消计时并复制，
+  // 折叠态双击不展开、展开态双击保持展开，与「单击展开/收起」共存无闪烁
+  const clickTimerRef = useRef<number | null>(null);
+
+  function scheduleToggle(key: string) {
+    if (clickTimerRef.current !== null) window.clearTimeout(clickTimerRef.current);
+    clickTimerRef.current = window.setTimeout(() => {
+      clickTimerRef.current = null;
+      toggleEntry(key);
+    }, DOUBLE_CLICK_DELAY_MS);
+  }
+
+  function handleDoubleClick(entry: PromptEntry) {
+    if (clickTimerRef.current !== null) {
+      window.clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+    }
+    // 复制只带正文，frontmatter 不进剪贴板（与右键「复制」同语义）
+    void hana.clipboard.writeText(stripFrontmatter(entry.content));
+    hana.toast.show({ message: '已复制', type: 'success' });
+  }
+
+  useEffect(() => {
+    return () => {
+      if (clickTimerRef.current !== null) window.clearTimeout(clickTimerRef.current);
+    };
+  }, []);
 
   /* ---- 拖动排序（同目录/目录行即时重排，落点 POST；设计 v3 7.4） ---- */
 
@@ -932,7 +964,8 @@ function Panel() {
                           <button
                             type="button"
                             className={`ps-card-head${drag?.kind === 'entry' && drag.dir === dir.name && drag.filename === entry.filename ? ' ps-dragging' : ''}`}
-                            onClick={() => toggleEntry(key)}
+                            onClick={() => scheduleToggle(key)}
+                            onDoubleClick={() => handleDoubleClick(entry)}
                             onContextMenu={(e) => openMenu(e, 'entry', entry)}
                             onDragStart={(e) => startEntryDrag(e, entry)}
                             onDragOver={(e) => dragOverEntry(e, entry)}
@@ -943,7 +976,9 @@ function Panel() {
                           >
                             <span className="ps-card-title">{entry.title}</span>
                           </button>
-                          <pre className="ps-card-body">{stripFrontmatter(entry.content)}</pre>
+                          <pre className="ps-card-body" onDoubleClick={() => handleDoubleClick(entry)}>
+                            {stripFrontmatter(entry.content)}
+                          </pre>
                           <button
                             type="button"
                             className="ps-card-close"
@@ -961,7 +996,8 @@ function Panel() {
                         key={key}
                         type="button"
                         className={`ps-pill${drag?.kind === 'entry' && drag.dir === dir.name && drag.filename === entry.filename ? ' ps-dragging' : ''}`}
-                        onClick={() => toggleEntry(key)}
+                        onClick={() => scheduleToggle(key)}
+                        onDoubleClick={() => handleDoubleClick(entry)}
                         onContextMenu={(e) => openMenu(e, 'entry', entry)}
                         onDragStart={(e) => startEntryDrag(e, entry)}
                         onDragOver={(e) => dragOverEntry(e, entry)}

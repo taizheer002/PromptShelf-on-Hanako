@@ -78,3 +78,16 @@
 ## 提交
 
 单个 commit，含：lib/index-core.js、lib/store.js、routes/api.js、tools/search-prompts.js、ui/Panel.tsx、test/store-title.test.js、assets/panel.js、assets/panel.css、本报告。
+
+## 补充：双击复制（设计 v3 7.2 遗漏补项）
+
+- 日期：2026-08-15（终审提交后追加）
+- **背景**：设计 v3 7.2 明确「双击：复制正文到剪贴板 + toast『已复制』」，实现计划/brief 漏掉该交互，上一轮 F3 报告已注明；本轮补齐。
+- **改了哪些函数**（`ui/Panel.tsx`）：
+  - 模块常量 `DOUBLE_CLICK_DELAY_MS = 250`。
+  - `scheduleToggle(key)`：单击延迟 250ms 判定展开/收起，双击时第二次 click 重启计时、dblclick 取消计时，展开态不被切换（折叠态双击不展开、展开态双击保持展开，与「单击展开/收起」共存无闪烁）。
+  - `handleDoubleClick(entry)`：`hana.clipboard.writeText(stripFrontmatter(entry.content))` + `hana.toast.show({ message: '已复制', type: 'success' })`，frontmatter 不进剪贴板（与右键「复制」同语义）。
+  - 接入点：折叠态胶囊 button、展开态卡片标题栏 button（`onClick → scheduleToggle`、`onDoubleClick → handleDoubleClick`）、展开卡片正文 `<pre>`（onDoubleClick 复制）。× 收起按钮保持单击收起，不参与双击语义。
+  - unmount 清理计时器（useEffect cleanup）。
+- **验证**：`npm run build:ui` ✅ / `npm run typecheck` ✅ / `npm test` 11/11 ✅（UI 逻辑变更不影响 node 测试面）。
+- **提交**：`fix: 补双击复制（设计 v3 7.2 遗漏项）`（ui/Panel.tsx + assets/panel.js）
