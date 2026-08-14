@@ -193,18 +193,42 @@ body[data-surface="widget"] .plugin-panel {
   color: var(--hana-plugin-text);
 }
 
-/* ---- 提示条 ---- */
+/* ---- 警告条（Task 8；CSS 变量随主题，无硬编码色值） ---- */
 
-.ps-notice {
-  display: block;
-  width: 100%;
-  padding: 6px 10px;
+.ps-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.ps-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 7px 10px;
   border: 1px solid var(--hana-plugin-border);
   border-radius: var(--hana-plugin-radius-input);
-  background: var(--hana-plugin-accent-light);
+  background: var(--hana-plugin-bg-card);
   color: var(--hana-plugin-text-light);
   font-size: 0.75rem;
-  line-height: 1.4;
+  line-height: 1.5;
+}
+
+.ps-alert-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.ps-alert-warn {
+  border-color: color-mix(in srgb, var(--hana-plugin-accent) 55%, var(--hana-plugin-border));
+  background: var(--hana-plugin-accent-light);
+}
+
+.ps-alert-degraded {
+  border-color: color-mix(in srgb, var(--hana-plugin-danger) 45%, var(--hana-plugin-border));
+  background: color-mix(in srgb, var(--hana-plugin-danger) 9%, transparent);
 }
 
 /* ---- 右键菜单 ---- */

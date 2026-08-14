@@ -376,6 +376,44 @@ function InlineForm({
   );
 }
 
+/* ---- 警告条（Task 8；设计 v3 7.5；用 CSS 变量随主题，不用 alert） ---- */
+
+function WarningBar({
+  state,
+  rebuilding,
+  onRebuild,
+}: {
+  state: ShelfState;
+  rebuilding: boolean;
+  onRebuild: () => void;
+}) {
+  const { dataDir, indexHealthy, warning, degraded } = state;
+  // 索引损坏提示只在已初始化（dataDir 已配置）时有意义：未初始化时 /api/state 的
+  // fallback 会带 indexHealthy:false，但那不是索引损坏，而是尚未初始化
+  const showIndex = !!dataDir && indexHealthy === false;
+  // 索引损坏时 warning 是同一提示链（pickFallbackIndex 的 fallback 说明），由损坏块
+  // 统一承载并带重建入口，不重复展示；其余情况单独展示运行期 warning
+  const showWarning = !showIndex && !!warning;
+  const showDegraded = !!degraded;
+  if (!showIndex && !showWarning && !showDegraded) return null;
+  return (
+    <div className="ps-alerts">
+      {showIndex && (
+        <div className="ps-alert ps-alert-warn">
+          <span className="ps-alert-text">排序索引损坏，已恢复默认顺序</span>
+          <Button size="sm" variant="secondary" loading={rebuilding} onClick={onRebuild}>
+            重建索引
+          </Button>
+        </div>
+      )}
+      {showWarning && <div className="ps-alert ps-alert-warn">{warning}</div>}
+      {showDegraded && (
+        <div className="ps-alert ps-alert-degraded">写入已降级为备份+直写模式</div>
+      )}
+    </div>
+  );
+}
+
 /* ---- 主面板 ---- */
 
 function Panel() {
@@ -384,6 +422,8 @@ function Panel() {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [form, setForm] = useState<InlineForm | null>(null);
+  // 警告条（Task 8）：重建索引请求中的 loading 态
+  const [rebuilding, setRebuilding] = useState(false);
   // 拖动排序（Task 7）
   const [drag, setDrag] = useState<DragInfo | null>(null);
   const [dropTargetDir, setDropTargetDir] = useState<string | null>(null);
@@ -676,6 +716,29 @@ function Panel() {
     }
   }
 
+  /** 重建索引：成功时 postAction 已回填新 state（indexHealthy=true、warning 清空） */
+  async function handleRebuild() {
+    setRebuilding(true);
+    const r = await postAction({ type: 'rebuild' });
+    setRebuilding(false);
+    if (!r.ok) hana.toast.show({ message: r.error || '重建索引失败', type: 'error' });
+  }
+
+  /** 初始化引导：pick 目录 → POST init → state 回填进入正常界面；取消选择则安静返回 */
+  async function handleInit() {
+    let picked;
+    try {
+      picked = await hana.resources.pick({ mode: 'directory', multiple: false });
+    } catch {
+      hana.toast.show({ message: '选择目录失败', type: 'error' });
+      return;
+    }
+    const ref = picked?.resources?.[0] as { path?: string } | undefined;
+    if (!ref?.path) return;
+    const r = await postAction({ type: 'init', dataDir: ref.path });
+    if (!r.ok) hana.toast.show({ message: r.error || '初始化失败', type: 'error' });
+  }
+
   function openMenu(e: ReactMouseEvent, kind: 'entry' | 'dir', entry?: PromptEntry, dirName?: string) {
     e.preventDefault();
     e.stopPropagation();
@@ -777,8 +840,6 @@ function Panel() {
     }
   }
 
-  const notice = state?.warning || state?.degraded || null;
-
   function renderBody() {
     if (!state) {
       return <EmptyState title="加载中…" description="正在读取提示词架" />;
@@ -790,12 +851,7 @@ function Panel() {
           title="提示词架尚未初始化"
           description="选择一个数据目录作为提示词库的存放位置，之后词条会自动出现在这里。"
           action={
-            <Button
-              variant="primary"
-              onClick={() =>
-                hana.toast.show({ message: '初始化向导将在后续版本提供', type: 'info' })
-              }
-            >
+            <Button variant="primary" onClick={handleInit}>
               选择数据目录
             </Button>
           }
@@ -930,8 +986,10 @@ function Panel() {
       <CardShell
         title="PromptShelf"
         description="提示词架：右键词条/目录操作，单击胶囊展开预览，点标题栏或 × 收起。"
-        footer={notice ? <span className="ps-notice">{notice}</span> : undefined}
       >
+        {state && (
+          <WarningBar state={state} rebuilding={rebuilding} onRebuild={handleRebuild} />
+        )}
         {renderBody()}
         <ContextMenu
           menu={menu}
