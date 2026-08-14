@@ -119,16 +119,22 @@ const DIR_MENU: MenuItem[] = [
   { key: 'rename-dir', label: '重命名' },
 ];
 
+/* 空白区右键：新建目录 / 新建卡片（空态与面板空白处均可） */
+const BLANK_MENU: MenuItem[] = [
+  { key: 'create-dir', label: '新建目录' },
+  { key: 'create-prompt', label: '新建卡片' },
+];
+
 type MenuState = {
   x: number;
   y: number;
-  kind: 'entry' | 'dir';
+  kind: 'entry' | 'dir' | 'blank';
   entry?: PromptEntry;
   dirName?: string;
 };
 
 type InlineForm =
-  | { kind: 'create-dir'; anchorDir: string }
+  | { kind: 'create-dir'; anchorDir?: string }
   | { kind: 'create-prompt'; dirName: string }
   | { kind: 'rename-entry'; entry: PromptEntry }
   | { kind: 'rename-dir'; dirName: string }
@@ -447,7 +453,8 @@ function Panel() {
 
   useEffect(() => {
     hana.ready();
-    hana.ui.resize({ height: 480 });
+    // 高度传大值，宿主 clamp 到侧栏可用全高（viewportHeight - chrome）
+    hana.ui.resize({ height: 9999 });
     fetchState();
   }, []);
 
@@ -837,6 +844,22 @@ function Panel() {
       return;
     }
 
+    if (kind === 'blank') {
+      switch (key) {
+        case 'create-dir':
+          setForm({ kind: 'create-dir', anchorDir: undefined });
+          break;
+        case 'create-prompt':
+          if (!state?.directories.length) {
+            hana.toast.show({ message: '请先新建目录', type: 'info' });
+            break;
+          }
+          setForm({ kind: 'create-prompt', dirName: state.directories[0].name });
+          break;
+      }
+      return;
+    }
+
     if (kind === 'dir' && dirName) {
       const path = absPath(dataDir, dirName);
       switch (key) {
@@ -897,21 +920,27 @@ function Panel() {
 
     if (!hasEntries && !form) {
       return (
-        <EmptyState
-          title="架子上还没有词条"
-          description="右键目录行可以新建卡片，或通过工具写入第一个提示词。"
-        />
+        <div onContextMenu={(e) => openMenu(e, 'blank')}>
+          <EmptyState
+            title="架子上还没有词条"
+            description="右键目录行可以新建卡片，或通过工具写入第一个提示词。"
+          />
+        </div>
       );
     }
 
     return (
       <div
         className="ps-shelf"
+        onContextMenu={(e) => openMenu(e, 'blank')}
         onDragOver={(e) => {
           // 仅跟踪位置用于会话区降级判定；空白处不 preventDefault → 不构成落点
           lastDragPosRef.current = { x: e.clientX, y: e.clientY };
         }}
       >
+        {form?.kind === 'create-dir' && !form.anchorDir && (
+          <InlineForm form={form} submit={postAction} done={() => setForm(null)} />
+        )}
         {state.directories.map((dir) => {
           const collapsed = collapsedDirs.has(dir.name);
           const dirForm = form && formAnchoredAtDir(form, dir.name) ? form : null;
@@ -1031,7 +1060,7 @@ function Panel() {
         {renderBody()}
         <ContextMenu
           menu={menu}
-          items={menu?.kind === 'entry' ? ENTRY_MENU : DIR_MENU}
+          items={menu?.kind === 'entry' ? ENTRY_MENU : menu?.kind === 'blank' ? BLANK_MENU : DIR_MENU}
           onSelect={handleMenuSelect}
           onClose={() => setMenu(null)}
         />
