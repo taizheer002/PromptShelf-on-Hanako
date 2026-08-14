@@ -13,7 +13,8 @@
   },
   "scripts": {
     "build:ui": "vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
