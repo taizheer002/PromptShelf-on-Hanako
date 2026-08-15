@@ -482,16 +482,47 @@ function Panel() {
     fetchState();
   }, []);
 
-  // 问号圈灰度：读取主题底色亮度，亮主题往白偏 15%、暗主题往黑偏 15%（融入背景的低存在感灰）
+  // 问号圈灰度：读取主题底色亮度，亮主题往白偏 15%、暗主题往黑偏 15%（融入背景的低存在感灰）；
+  // 滚动条 thumb 反之：亮主题往黑偏 20%（hover 35%）、暗主题往白偏 20%（hover 35%），保证可见
   useEffect(() => {
     const cs = getComputedStyle(document.documentElement);
     const bg = (cs.getPropertyValue('--hana-plugin-bg') || '#F8F5ED').trim();
     const m = bg.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)/);
     if (m) {
       const lum = (0.299 * Number(m[1]) + 0.587 * Number(m[2]) + 0.114 * Number(m[3])) / 255;
-      const mix = `color-mix(in srgb, ${bg} 85%, ${lum > 0.5 ? 'white' : 'black'} 15%)`;
-      document.documentElement.style.setProperty('--ps-help-color', mix);
+      const light = lum > 0.5;
+      const toward = light ? 'black' : 'white';
+      const fade = light ? 'white' : 'black';
+      const el = document.documentElement;
+      el.style.setProperty(
+        '--ps-help-color',
+        `color-mix(in srgb, ${bg} 85%, ${fade} 15%)`,
+      );
+      el.style.setProperty(
+        '--ps-scroll-thumb',
+        `color-mix(in srgb, ${bg} 80%, ${toward} 20%)`,
+      );
+      el.style.setProperty(
+        '--ps-scroll-thumb-hover',
+        `color-mix(in srgb, ${bg} 65%, ${toward} 35%)`,
+      );
     }
+  }, []);
+
+  // 滚动条：滚动中才显示 thumb，停止 600ms 后隐藏（class 挂根，子元素滚动也触发）
+  useEffect(() => {
+    const root = document.documentElement;
+    let t: number | undefined;
+    function onScroll() {
+      root.classList.add('ps-scrolling');
+      if (t) window.clearTimeout(t);
+      t = window.setTimeout(() => root.classList.remove('ps-scrolling'), 600);
+    }
+    document.addEventListener('scroll', onScroll, true);
+    return () => {
+      document.removeEventListener('scroll', onScroll, true);
+      if (t) window.clearTimeout(t);
+    };
   }, []);
 
   // Agent 工具/外部编辑写入后，聚焦或重新可见时刷新（设计 v3 5.5；

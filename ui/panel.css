@@ -391,3 +391,28 @@ body[data-surface="widget"] .plugin-panel {
 .ps-help:focus-visible .ps-help-pop {
   display: block;
 }
+
+/* ---- 滚动条：细 30%、track 跟随主题背景、thumb 滚动中才显示（底色 ±20%，hover 35%） ---- */
+
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--hana-plugin-bg);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4.5px;
+}
+
+/* 滚动中显示 thumb；未滚动时透明（不占视觉） */
+.ps-scrolling *::-webkit-scrollbar-thumb {
+  background: var(--ps-scroll-thumb, var(--hana-plugin-text-muted));
+}
+
+.ps-scrolling *::-webkit-scrollbar-thumb:hover {
+  background: var(--ps-scroll-thumb-hover, var(--hana-plugin-text));
+}
