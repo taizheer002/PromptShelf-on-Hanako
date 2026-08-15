@@ -418,13 +418,18 @@ body::-webkit-scrollbar-track {
 }
 
 /* 滚动中显示 thumb；未滚动时透明（不占视觉） */
+/* 根滚动条（html/body 自身）必须单独覆盖：.ps-scrolling * 后代选择器够不到根元素 */
+html.ps-scrolling::-webkit-scrollbar-thumb,
+body.ps-scrolling::-webkit-scrollbar-thumb,
 .ps-scrolling *::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--hana-plugin-bg) 90%, var(--hana-plugin-text-muted) 10%);
+  background: var(--ps-scroll-thumb, var(--hana-plugin-text-muted));
 }
 
 /* 鼠标置于 thumb 上：灰度提升到 20% */
+html.ps-scrolling::-webkit-scrollbar-thumb:hover,
+body.ps-scrolling::-webkit-scrollbar-thumb:hover,
 .ps-scrolling *::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--hana-plugin-bg) 80%, var(--hana-plugin-text-muted) 20%);
+  background: var(--ps-scroll-thumb-hover, var(--hana-plugin-text));
 }
 
 /* textarea 滚动条显式覆盖（宿主 overlay 模式下可能忽略通配规则） */

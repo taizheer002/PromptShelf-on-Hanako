@@ -482,16 +482,51 @@ function Panel() {
     fetchState();
   }, []);
 
-  // 问号圈灰度：读取主题底色亮度，亮主题往白偏 15%、暗主题往黑偏 15%（融入背景的低存在感灰）
-  // （滚动条颜色不走 JS，用纯 CSS color-mix，避免作用域读取失败）
+  // 主题色工具：与主题明暗相反（亮主题元素更深、暗主题更浅），低存在感灰。
+  // 从 .plugin-panel（HanaThemeProvider 注入作用域）读底色，多源 fallback；
+  // 直接算 rgb 字符串（scrollbar 伪元素不解析 color-mix，必须普通色值）。
+  function parseRgb(v: string): [number, number, number] | null {
+    const t = v.trim();
+    const hex = t.match(/^#([0-9a-f]{6})$/i);
+    if (hex) {
+      const n = parseInt(hex[1], 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+    const hex3 = t.match(/^#([0-9a-f]{3})$/i);
+    if (hex3) {
+      const n = hex3[1];
+      return [parseInt(n[0] + n[0], 16), parseInt(n[1] + n[1], 16), parseInt(n[2] + n[2], 16)];
+    }
+    const rgb = t.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)/);
+    if (rgb) return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])];
+    return null;
+  }
+  function mixToward(rgb: [number, number, number], toward: 'black' | 'white', pct: number): string {
+    const t = toward === 'black' ? 0 : 255;
+    const mix = (c: number) => Math.round(c + (t - c) * pct);
+    return `rgb(${mix(rgb[0])}, ${mix(rgb[1])}, ${mix(rgb[2])})`;
+  }
+
   useEffect(() => {
-    const cs = getComputedStyle(document.documentElement);
-    const bg = (cs.getPropertyValue('--hana-plugin-bg') || '#F8F5ED').trim();
-    const m = bg.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)/);
-    if (m) {
-      const lum = (0.299 * Number(m[1]) + 0.587 * Number(m[2]) + 0.114 * Number(m[3])) / 255;
-      const mix = `color-mix(in srgb, ${bg} 85%, ${lum > 0.5 ? 'white' : 'black'} 15%)`;
-      document.documentElement.style.setProperty('--ps-help-color', mix);
+    const hosts = [
+      document.querySelector('.plugin-panel'),
+      document.body,
+      document.documentElement,
+    ].filter(Boolean) as Element[];
+    let bg = '';
+    for (const el of hosts) {
+      const v = getComputedStyle(el).getPropertyValue('--hana-plugin-bg').trim();
+      if (v) { bg = v; break; }
+    }
+    const rgb = parseRgb(bg || '#F8F5ED');
+    if (rgb) {
+      const lum = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
+      // 与主题明暗相反：亮主题元素更深、暗主题更浅（用户确认的语义）
+      const toward: 'black' | 'white' = lum > 0.5 ? 'black' : 'white';
+      const el = document.documentElement;
+      el.style.setProperty('--ps-help-color', mixToward(rgb, toward, 0.15));
+      el.style.setProperty('--ps-scroll-thumb', mixToward(rgb, toward, 0.1));
+      el.style.setProperty('--ps-scroll-thumb-hover', mixToward(rgb, toward, 0.2));
     }
   }, []);
 
