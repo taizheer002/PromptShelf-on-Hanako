@@ -417,16 +417,28 @@ body::-webkit-scrollbar-track {
   border-radius: 3.5px;
 }
 
-/* 滚动中显示 thumb；未滚动时透明（不占视觉） */
-/* 内外分离：class 只挂在发生滚动的容器自身（Panel 滚动监听维护），
-   只匹配元素自身滚动条，后代不被波及（.ps-scrolling 是自身选择器） */
+/* 外部条（html 根滚动）：常显低调灰（±10%），hover 提升 20%。
+   根滚动事件在宿主 iframe 中检测不可靠（曾反复消失），改为常显保证可见 */
+html::-webkit-scrollbar-thumb {
+  background: var(--ps-scroll-thumb, var(--hana-plugin-text-muted));
+}
+html::-webkit-scrollbar-thumb:hover {
+  background: var(--ps-scroll-thumb-hover, var(--hana-plugin-text));
+}
+
+/* 内部条（卡片/输入框）：滚动中显示（.ps-scrolling 由 Panel 滚动监听维护，仅挂自身），
+   未滚动透明；另加 hover/focus 兜底，保证可发现 */
 .ps-scrolling::-webkit-scrollbar-thumb {
   background: var(--ps-scroll-thumb, var(--hana-plugin-text-muted));
 }
-
-/* 鼠标置于 thumb 上：灰度提升到 20% */
 .ps-scrolling::-webkit-scrollbar-thumb:hover {
   background: var(--ps-scroll-thumb-hover, var(--hana-plugin-text));
+}
+.ps-card-body:hover::-webkit-scrollbar-thumb,
+.ps-card-body:focus-within::-webkit-scrollbar-thumb,
+textarea:hover::-webkit-scrollbar-thumb,
+textarea:focus::-webkit-scrollbar-thumb {
+  background: var(--ps-scroll-thumb, var(--hana-plugin-text-muted));
 }
 
 /* textarea 滚动条显式覆盖（宿主 overlay 模式下可能忽略通配规则） */

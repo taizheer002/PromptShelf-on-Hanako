@@ -530,14 +530,15 @@ function Panel() {
     }
   }, []);
 
-  // 滚动条：滚动中显示 thumb，停止 1000ms 后淡出。
-  // 内外分离：只标记发生滚动的容器自身（滚动事件 target），
-  // 外侧滚动只显示外侧 thumb，卡片/输入框滚动只显示各自 thumb。
+  // 滚动条：内部容器（卡片/输入框）滚动中显示 thumb，停止 1000ms 后淡出。
+  // 外部条（html 根滚动）在宿主 iframe 中检测不可靠，改为 CSS 常显低调灰（见 panel.css）。
+  // 内外分离：class 只挂在发生滚动的容器自身，互不波及。
   useEffect(() => {
     let t: number | undefined;
     function onScroll(e: Event) {
-      let el = e.target as Element | Document | null;
-      if (!el || el === document) el = document.scrollingElement || document.documentElement;
+      const el = e.target as Element | Document | null;
+      if (!el || el === document) return;
+      if (el === document.documentElement || el === document.body) return; // 根滚动：外部条常显
       if (!(el instanceof Element)) return;
       if (t) window.clearTimeout(t);
       document.querySelectorAll('.ps-scrolling').forEach((n) => n.classList.remove('ps-scrolling'));
