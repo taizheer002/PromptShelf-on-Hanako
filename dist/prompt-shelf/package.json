@@ -3,8 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "author": "北巷",
-  "contributors": ["Hanako", "DeepSeek"],
   "dependencies": {
     "@hana/plugin-components": "file:vendor/sdk/hana-plugin-components-0.0.0.tgz",
     "@hana/plugin-protocol": "file:vendor/sdk/hana-plugin-protocol-0.0.0.tgz",
