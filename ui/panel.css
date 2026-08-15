@@ -418,17 +418,14 @@ body::-webkit-scrollbar-track {
 }
 
 /* 滚动中显示 thumb；未滚动时透明（不占视觉） */
-/* 根滚动条（html/body 自身）必须单独覆盖：.ps-scrolling * 后代选择器够不到根元素 */
-html.ps-scrolling::-webkit-scrollbar-thumb,
-body.ps-scrolling::-webkit-scrollbar-thumb,
-.ps-scrolling *::-webkit-scrollbar-thumb {
+/* 内外分离：class 只挂在发生滚动的容器自身（Panel 滚动监听维护），
+   只匹配元素自身滚动条，后代不被波及（.ps-scrolling 是自身选择器） */
+.ps-scrolling::-webkit-scrollbar-thumb {
   background: var(--ps-scroll-thumb, var(--hana-plugin-text-muted));
 }
 
 /* 鼠标置于 thumb 上：灰度提升到 20% */
-html.ps-scrolling::-webkit-scrollbar-thumb:hover,
-body.ps-scrolling::-webkit-scrollbar-thumb:hover,
-.ps-scrolling *::-webkit-scrollbar-thumb:hover {
+.ps-scrolling::-webkit-scrollbar-thumb:hover {
   background: var(--ps-scroll-thumb-hover, var(--hana-plugin-text));
 }
 

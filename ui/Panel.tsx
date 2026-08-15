@@ -530,14 +530,19 @@ function Panel() {
     }
   }, []);
 
-  // 滚动条：滚动中才显示 thumb，停止 600ms 后隐藏（class 挂根，子元素滚动也触发）
+  // 滚动条：滚动中显示 thumb，停止 1000ms 后淡出。
+  // 内外分离：只标记发生滚动的容器自身（滚动事件 target），
+  // 外侧滚动只显示外侧 thumb，卡片/输入框滚动只显示各自 thumb。
   useEffect(() => {
-    const root = document.documentElement;
     let t: number | undefined;
-    function onScroll() {
-      root.classList.add('ps-scrolling');
+    function onScroll(e: Event) {
+      let el = e.target as Element | Document | null;
+      if (!el || el === document) el = document.scrollingElement || document.documentElement;
+      if (!(el instanceof Element)) return;
       if (t) window.clearTimeout(t);
-      t = window.setTimeout(() => root.classList.remove('ps-scrolling'), 600);
+      document.querySelectorAll('.ps-scrolling').forEach((n) => n.classList.remove('ps-scrolling'));
+      el.classList.add('ps-scrolling');
+      t = window.setTimeout(() => el.classList.remove('ps-scrolling'), 1000);
     }
     document.addEventListener('scroll', onScroll, true);
     return () => {
