@@ -4,3 +4,5 @@ node_modules/
 
 # SDD 工作目录（不上传）
 .superpowers/
+
+dist/
