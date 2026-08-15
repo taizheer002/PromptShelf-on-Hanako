@@ -482,30 +482,16 @@ function Panel() {
     fetchState();
   }, []);
 
-  // 问号圈灰度：读取主题底色亮度，亮主题往白偏 15%、暗主题往黑偏 15%（融入背景的低存在感灰）；
-  // 滚动条 thumb 反之：亮主题往黑偏 20%（hover 35%）、暗主题往白偏 20%（hover 35%），保证可见
+  // 问号圈灰度：读取主题底色亮度，亮主题往白偏 15%、暗主题往黑偏 15%（融入背景的低存在感灰）
+  // （滚动条颜色不走 JS，用纯 CSS color-mix，避免作用域读取失败）
   useEffect(() => {
     const cs = getComputedStyle(document.documentElement);
     const bg = (cs.getPropertyValue('--hana-plugin-bg') || '#F8F5ED').trim();
     const m = bg.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)/);
     if (m) {
       const lum = (0.299 * Number(m[1]) + 0.587 * Number(m[2]) + 0.114 * Number(m[3])) / 255;
-      const light = lum > 0.5;
-      const toward = light ? 'black' : 'white';
-      const fade = light ? 'white' : 'black';
-      const el = document.documentElement;
-      el.style.setProperty(
-        '--ps-help-color',
-        `color-mix(in srgb, ${bg} 85%, ${fade} 15%)`,
-      );
-      el.style.setProperty(
-        '--ps-scroll-thumb',
-        `color-mix(in srgb, ${bg} 80%, ${toward} 20%)`,
-      );
-      el.style.setProperty(
-        '--ps-scroll-thumb-hover',
-        `color-mix(in srgb, ${bg} 65%, ${toward} 35%)`,
-      );
+      const mix = `color-mix(in srgb, ${bg} 85%, ${lum > 0.5 ? 'white' : 'black'} 15%)`;
+      document.documentElement.style.setProperty('--ps-help-color', mix);
     }
   }, []);
 

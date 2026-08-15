@@ -392,27 +392,43 @@ body[data-surface="widget"] .plugin-panel {
   display: block;
 }
 
-/* ---- 滚动条：细 30%、track 跟随主题背景、thumb 滚动中才显示（底色 ±20%，hover 35%） ---- */
+/* ---- 滚动条：统一 7px 圆角；track 跟随所处界面色（大滚动条跟底色、小滚动条跟浮色）； ---- */
+/* thumb = 反灰度 ±10%（bg 90% + text-muted 10%，低调存在），hover 提升到 20%；   */
+/* 未滚动时透明，滚动中显示（.ps-scrolling 由 Panel 滚动监听维护）                   */
 
 *::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
+  width: 7px;
+  height: 7px;
 }
 
+/* 默认（卡片/textarea 等浮层内）：track 跟浮色 */
 *::-webkit-scrollbar-track {
+  background: var(--hana-plugin-bg-card);
+}
+
+/* 大滚动条（iframe 页面级）：track 跟底色 */
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
   background: var(--hana-plugin-bg);
 }
 
 *::-webkit-scrollbar-thumb {
   background: transparent;
-  border-radius: 4.5px;
+  border-radius: 3.5px;
 }
 
 /* 滚动中显示 thumb；未滚动时透明（不占视觉） */
 .ps-scrolling *::-webkit-scrollbar-thumb {
-  background: var(--ps-scroll-thumb, var(--hana-plugin-text-muted));
+  background: color-mix(in srgb, var(--hana-plugin-bg) 90%, var(--hana-plugin-text-muted) 10%);
 }
 
+/* 鼠标置于 thumb 上：灰度提升到 20% */
 .ps-scrolling *::-webkit-scrollbar-thumb:hover {
-  background: var(--ps-scroll-thumb-hover, var(--hana-plugin-text));
+  background: color-mix(in srgb, var(--hana-plugin-bg) 80%, var(--hana-plugin-text-muted) 20%);
+}
+
+/* textarea 滚动条显式覆盖（宿主 overlay 模式下可能忽略通配规则） */
+textarea::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
 }
